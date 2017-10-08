@@ -40,14 +40,15 @@ class DiameterAppSh extends DiameterApp {
     var params = connection.common_parameters
 
     if (session_id != null)
-      params ++= DiameterCodec.encodeTLV (DiameterDictionary.AVP_SESSION_ID, DiameterCodec.AVP_FLAG_MANDATORY, 0, session_id)
+      params ++= DiameterCodec.encodeTLV(DiameterDictionary.AVP_SESSION_ID, DiameterCodec.AVP_FLAG_MANDATORY, 0, session_id)
 
     params ++= DiameterCodec.encodeInt(DiameterDictionary.AVP_RESULT_CODE, DiameterCodec.AVP_FLAG_MANDATORY, 0, 2001)
     params ++= DiameterCodec.encodeInt(DiameterDictionary.AVP_AUTH_SESSION_STATE, DiameterCodec.AVP_FLAG_MANDATORY, 0, 1)
 
 
     if (vendor_app_id != null)
-      params ++= DiameterCodec.encodeTLV (DiameterDictionary.AVP_VENDOR_SPECIFIC_APP_ID, DiameterCodec.AVP_FLAG_MANDATORY, 0, vendor_app_id)
+      params ++= DiameterCodec.encodeTLV (DiameterDictionary.AVP_VENDOR_SPECIFIC_APP_ID,
+                                          DiameterCodec.AVP_FLAG_MANDATORY, 0, vendor_app_id)
 
     val msg = DiameterCodec.encodeHeader(DiameterDictionary.CMD_UDR,
                                          DiameterCodec.MSG_FLAG_PROXYABLE,

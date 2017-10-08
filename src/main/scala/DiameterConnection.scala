@@ -63,7 +63,7 @@ class DiameterConnection(origin_host:String, origin_realm:String, apps:List[Diam
     }
   }
 
-  private val decoder = new Decoder(callback_message)
+  private val decoder = new DiameterMessageDecoder(callback_message)
   override def receive = {
     case PeerClosed =>  println("closed")
                         context stop self

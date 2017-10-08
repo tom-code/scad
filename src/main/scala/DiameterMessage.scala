@@ -11,7 +11,7 @@ class DiameterHeader(version:Byte, leni:Int, flagsi:Int, codei:Int, app_id:Int, 
   def isRequest = (flags & 0x80) != 0
 }
 
-class Decoder(callback:(DiameterHeader, ByteString) =>Unit) {
+class DiameterMessageDecoder(callback:(DiameterHeader, ByteString) =>Unit) {
   private var got_header = false
   private var header:DiameterHeader = null
   private var data = ByteString.empty

@@ -7,7 +7,7 @@ import akka.io.{IO, Tcp}
 
 
 
-class TCPServer(port: Int, handler: Props) extends Actor {
+class TCPServer(port: Int, con_actor_cfg: Props) extends Actor {
   import context.system
   val io = IO(Tcp) ! Bind(self, new InetSocketAddress(port))
 
@@ -17,7 +17,7 @@ class TCPServer(port: Int, handler: Props) extends Actor {
                                      context stop self
     case c @ Connected(remote, local) =>
                                           println(s"new connection from $remote")
-                                          val h = context.actorOf(handler)
+                                          val h = context.actorOf(con_actor_cfg)
                                           sender() ! Register(h)
     case _ => println("receive default - should not happen")
   }
