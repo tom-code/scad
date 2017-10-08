@@ -12,7 +12,7 @@ class TCPServer(port: Int, handler: Props) extends Actor {
   val io = IO(Tcp) ! Bind(self, new InetSocketAddress(port))
 
   override def receive = {
-    case b @ Bound(local_address) => println(s"socket bound [port=$port]")
+    case b @ Bound(local_address) => println(s"socket bound [address=$local_address]")
     case CommandFailed(_:Bind)    => println(s"socket bind failed [port=$port]")
                                      context stop self
     case c @ Connected(remote, local) =>

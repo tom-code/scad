@@ -37,10 +37,10 @@ object DiameterCodec {
     (code, flags, len, vendor, data.drop(size))
   }
 
-  def decodeParameters(data:ByteString, callback:(Int, Int, Int, ByteString)=>Unit) {
+  def decodeParameters(data:ByteString, callback:(Int, Int, ByteString)=>Unit) {
     var (code, flags, len, vendor, rest) = decodeTLV(data)
 
-    callback(code, vendor, len, rest.take(len))
+    callback(code, vendor, rest.take(len))
     rest = rest.drop(len)
 
     if ((len % 4) > 0) rest = rest.drop(4 - len%4)

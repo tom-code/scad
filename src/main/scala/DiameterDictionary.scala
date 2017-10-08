@@ -15,4 +15,7 @@ object DiameterDictionary {
   final val APP_SH  = 0x01000001
 
   final val VENDOR_3GPP = 10415
+  final val AVP_DATA_REF        = 703
+  final val AVP_USER_IDENTITY   = 700
+  final val AVP_PUBLIC_IDENTITY = 601
 }

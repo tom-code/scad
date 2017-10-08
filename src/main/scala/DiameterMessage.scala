@@ -8,6 +8,7 @@ class DiameterHeader(version:Byte, leni:Int, flagsi:Int, codei:Int, app_id:Int, 
   def hh    = hh_id
   def flags = flagsi
   def app   = app_id
+  def isRequest = (flags & 0x80) != 0
 }
 
 class Decoder(callback:(DiameterHeader, ByteString) =>Unit) {

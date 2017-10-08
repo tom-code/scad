@@ -13,7 +13,7 @@ class DiameterConnection(origin_host:String, origin_realm:String, apps:List[Diam
     println("==== GOT CER")
     var vendor_app_id: ByteString = null
 
-    DiameterCodec.decodeParameters(data, (code, vendor, len, data) =>
+    DiameterCodec.decodeParameters(data, (code, vendor, data) =>
       if (vendor == 0)
         code match {
           case DiameterDictionary.AVP_VENDOR_SPECIFIC_APP_ID => vendor_app_id = data
@@ -50,7 +50,7 @@ class DiameterConnection(origin_host:String, origin_realm:String, apps:List[Diam
         return
       }
     }
-    if ((header.flags & 0x80) != 0) {
+    if (header.isRequest) {
       header.code match {
         case DiameterDictionary.CMD_CER => handle_cer(header, data)
         case DiameterDictionary.CMD_DWR => handle_dwr(header, data)

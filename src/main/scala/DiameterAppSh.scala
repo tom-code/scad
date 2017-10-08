@@ -12,7 +12,7 @@ class DiameterAppSh extends DiameterApp {
     var session_id : ByteString = null
 
 
-    DiameterCodec.decodeParameters(data, (code, vendor, len, data)=>
+    DiameterCodec.decodeParameters(data, (code, vendor, data)=>
       vendor match {
         case 0 => code match {
           case DiameterDictionary.AVP_SESSION_ID             => session_id = data
@@ -21,10 +21,10 @@ class DiameterAppSh extends DiameterApp {
           case _                                   => println(s"UDR unknown parameter $code")
         }
         case DiameterDictionary.VENDOR_3GPP => code match {
-          case 703 => data_refs = data_refs :+ data.iterator.getInt(ByteOrder.BIG_ENDIAN)
-          case 700 => DiameterCodec.decodeParameters(data, (code, vendor, len, dt) =>
+          case DiameterDictionary.AVP_DATA_REF      => data_refs = data_refs :+ data.iterator.getInt(ByteOrder.BIG_ENDIAN)
+          case DiameterDictionary.AVP_USER_IDENTITY => DiameterCodec.decodeParameters(data, (code, vendor, dt) =>
             code match {
-              case 601 => public_identity = dt.decodeString("UTF-8")
+              case DiameterDictionary.AVP_PUBLIC_IDENTITY => public_identity = dt.decodeString("UTF-8")
             })
           case _   => println(s"UDR unknown parameter $code")
         }
@@ -36,6 +36,7 @@ class DiameterAppSh extends DiameterApp {
     for (ref <- data_refs) print(ref + " ")
     println()
 
+    // now generate response
     var params = connection.common_parameters
 
     if (session_id != null)
@@ -43,6 +44,7 @@ class DiameterAppSh extends DiameterApp {
 
     params ++= DiameterCodec.encodeInt(DiameterDictionary.AVP_RESULT_CODE, DiameterCodec.AVP_FLAG_MANDATORY, 0, 2001)
     params ++= DiameterCodec.encodeInt(DiameterDictionary.AVP_AUTH_SESSION_STATE, DiameterCodec.AVP_FLAG_MANDATORY, 0, 1)
+
 
     if (vendor_app_id != null)
       params ++= DiameterCodec.encodeTLV (DiameterDictionary.AVP_VENDOR_SPECIFIC_APP_ID, DiameterCodec.AVP_FLAG_MANDATORY, 0, vendor_app_id)
@@ -52,9 +54,12 @@ class DiameterAppSh extends DiameterApp {
   }
 
   override def handle_message(header: DiameterHeader, data: ByteString, connection:DiameterConnection) {
-    println("sh handle message")
-    if (header.code == DiameterDictionary.CMD_UDR)
-      handle_udr(header, data, connection)
+    if (header.isRequest) {
+      header.code match {
+        case DiameterDictionary.CMD_UDR => handle_udr(header, data, connection)
+      }
+    }
+
   }
 
   override def id: Integer = DiameterDictionary.APP_SH
