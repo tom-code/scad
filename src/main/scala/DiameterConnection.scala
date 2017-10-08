@@ -6,7 +6,8 @@ import akka.util.ByteString
 class DiameterConnection(origin_host:String, origin_realm:String, apps:List[DiameterApp]) extends Actor {
   println("connected")
 
-  def common_parameters = DiameterCodec.encodeString(DiameterDictionary.AVP_ORIGIN_HOST, DiameterCodec.AVP_FLAG_MANDATORY, 0, origin_host) ++
+  def common_parameters = DiameterCodec.encodeString(DiameterDictionary.AVP_ORIGIN_HOST,
+                                                     DiameterCodec.AVP_FLAG_MANDATORY, 0, origin_host) ++
     DiameterCodec.encodeString(DiameterDictionary.AVP_ORIGIN_REALM, DiameterCodec.AVP_FLAG_MANDATORY, 0, origin_realm)
 
   private def handle_cer(header:DiameterHeader, data:ByteString) {
@@ -23,9 +24,12 @@ class DiameterConnection(origin_host:String, origin_realm:String, apps:List[Diam
     )
 
     var params = common_parameters
-    if (vendor_app_id != null) params ++= DiameterCodec.encodeTLV (260, DiameterCodec.AVP_FLAG_MANDATORY, 0, vendor_app_id)
-    params ++= DiameterCodec.encodeInt (DiameterDictionary.AVP_VENDOR_ID, DiameterCodec.AVP_FLAG_MANDATORY, 0, 10415)
-    params ++= DiameterCodec.encodeInt (DiameterDictionary.AVP_RESULT_CODE, DiameterCodec.AVP_FLAG_MANDATORY, 0, 2001)
+    if (vendor_app_id != null)
+      params ++= DiameterCodec.encodeTLV(DiameterDictionary.AVP_VENDOR_SPECIFIC_APP_ID,
+                                         DiameterCodec.AVP_FLAG_MANDATORY, 0, vendor_app_id)
+
+    params ++= DiameterCodec.encodeInt(DiameterDictionary.AVP_VENDOR_ID, DiameterCodec.AVP_FLAG_MANDATORY, 0, 10415)
+    params ++= DiameterCodec.encodeInt(DiameterDictionary.AVP_RESULT_CODE, DiameterCodec.AVP_FLAG_MANDATORY, 0, 2001)
 
     val msg = DiameterCodec.encodeHeader(DiameterDictionary.CMD_CER, 0, 0, header.hh, header.ee, params)
 
@@ -36,7 +40,7 @@ class DiameterConnection(origin_host:String, origin_realm:String, apps:List[Diam
     println("==== GOT DWR")
 
     var params = common_parameters
-    params ++= DiameterCodec.encodeInt (DiameterDictionary.AVP_RESULT_CODE, DiameterCodec.AVP_FLAG_MANDATORY, 0, 2001)
+    params ++= DiameterCodec.encodeInt(DiameterDictionary.AVP_RESULT_CODE, DiameterCodec.AVP_FLAG_MANDATORY, 0, 2001)
 
     val msg = DiameterCodec.encodeHeader(DiameterDictionary.CMD_DWR, 0, 0, header.hh, header.ee, params)
 
@@ -61,8 +65,8 @@ class DiameterConnection(origin_host:String, origin_realm:String, apps:List[Diam
 
   private val decoder = new Decoder(callback_message)
   override def receive = {
-    case PeerClosed =>      println("closed")
-      context stop self
+    case PeerClosed =>  println("closed")
+                        context stop self
 
     case Received(data) =>  decoder.newData(data)
 

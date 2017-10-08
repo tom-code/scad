@@ -18,7 +18,7 @@ class DiameterAppSh extends DiameterApp {
           case DiameterDictionary.AVP_SESSION_ID             => session_id = data
           case DiameterDictionary.AVP_VENDOR_SPECIFIC_APP_ID => vendor_app_id = data
           case DiameterDictionary.AVP_ORIGIN_HOST            => println("origin host: " + data.decodeString("UTF-8"))
-          case _                                   => println(s"UDR unknown parameter $code")
+          case _                                             => println(s"UDR unknown parameter $code")
         }
         case DiameterDictionary.VENDOR_3GPP => code match {
           case DiameterDictionary.AVP_DATA_REF      => data_refs = data_refs :+ data.iterator.getInt(ByteOrder.BIG_ENDIAN)
@@ -49,7 +49,10 @@ class DiameterAppSh extends DiameterApp {
     if (vendor_app_id != null)
       params ++= DiameterCodec.encodeTLV (DiameterDictionary.AVP_VENDOR_SPECIFIC_APP_ID, DiameterCodec.AVP_FLAG_MANDATORY, 0, vendor_app_id)
 
-    val msg = DiameterCodec.encodeHeader(DiameterDictionary.CMD_UDR, DiameterCodec.MSG_FLAG_PROXYABLE, DiameterDictionary.APP_SH, header.hh, header.ee, params)
+    val msg = DiameterCodec.encodeHeader(DiameterDictionary.CMD_UDR,
+                                         DiameterCodec.MSG_FLAG_PROXYABLE,
+                                         DiameterDictionary.APP_SH,
+                                         header.hh, header.ee, params)
     connection.sender() ! Write(msg)
   }
 
