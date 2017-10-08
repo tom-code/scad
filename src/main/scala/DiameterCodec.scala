@@ -1,6 +1,6 @@
 import java.nio.ByteOrder
 
-import akka.util.ByteString
+import akka.util.{ByteIterator, ByteString, ByteStringBuilder}
 
 object DiameterCodec {
   val AVP_FLAG_MANDATORY = 0x40
@@ -8,15 +8,17 @@ object DiameterCodec {
 
   val MSG_FLAG_PROXYABLE = 0x40
 
+  private def decode24bitInt(i: ByteIterator) = (i.getByte&0xff)<<16 | (i.getByte&0xff)<<8 | i.getByte&0xff
+
   def decodeHeader(data: ByteString) = {
     val i          = data.iterator
     val version    = i.getByte
-    val len:Int    = (i.getByte&0xff)<<16 | (i.getByte&0xff)<<8 | (i.getByte&0xff) - 20
+    val len        = decode24bitInt(i) - 20
     val flags:Int  = i.getByte&0xff
-    val code:Int   = (i.getByte&0xff)<<16 | (i.getByte&0xff)<<8 | i.getByte&0xff
-    val app_id:Int = i.getInt(ByteOrder.BIG_ENDIAN)
-    val hh_id:Int  = i.getInt(ByteOrder.BIG_ENDIAN)
-    val ee_id:Int  = i.getInt(ByteOrder.BIG_ENDIAN)
+    val code       = decode24bitInt(i)
+    val app_id     = i.getInt(ByteOrder.BIG_ENDIAN)
+    val hh_id      = i.getInt(ByteOrder.BIG_ENDIAN)
+    val ee_id      = i.getInt(ByteOrder.BIG_ENDIAN)
 
     new DiameterHeader(version, len, flags, code, app_id, hh_id, ee_id)
   }
@@ -25,19 +27,19 @@ object DiameterCodec {
     val i     = data.iterator
     val code  = i.getInt(ByteOrder.BIG_ENDIAN)
     val flags = i.getByte&0xff
-    var len   = (i.getByte&0xff)<<16 | (i.getByte&0xff)<<8 | (i.getByte&0xff) - 8
+    var len   = decode24bitInt(i) - 8
 
     var vendor = 0
-    var size   = 8
+    var header_size   = 8
     if ((flags & 0x80) == 0x80) {
       vendor = i.getInt(ByteOrder.BIG_ENDIAN)
       len  -= 4
-      size += 4
+      header_size += 4
     }
-    (code, flags, len, vendor, data.drop(size))
+    (code, flags, len, vendor, data.drop(header_size))
   }
 
-  def decodeParameters(data:ByteString, callback:(Int, Int, ByteString)=>Unit) {
+  def decodeParameters(data:ByteString, callback:(Int, Int, ByteString)=>Unit) : Unit =  {
     var (code, flags, len, vendor, rest) = decodeTLV(data)
 
     callback(code, vendor, rest.take(len))
@@ -45,23 +47,28 @@ object DiameterCodec {
 
     if ((len % 4) > 0) rest = rest.drop(4 - len%4)
 
-    if (rest.length > 0) decodeParameters(rest, callback)
+    if (rest.nonEmpty) decodeParameters(rest, callback)
   }
 
-  private val someBytes = new Array[Byte](4)
+  private def encode24bitInt(value:Int, builder: ByteStringBuilder) = {
+    builder.putByte(((value>>16)&0xff).toByte)
+    builder.putByte(((value>>8)&0xff).toByte)
+    builder.putByte((value&0xff).toByte)
+  }
+
+  private val zeroBytes = new Array[Byte](4)
   def encodeTLV(code:Int, flags:Int, vendor:Int, data:ByteString) = {
-    val a = ByteString.newBuilder
-    a.putInt(code)(ByteOrder.BIG_ENDIAN)
-    a.putByte(flags.toByte)
+    val builder = ByteString.newBuilder
+
+    builder.putInt(code)(ByteOrder.BIG_ENDIAN)
+    builder.putByte(flags.toByte)
     var len = data.length + 8
     if (vendor > 0) len += 4
-    a.putByte(((len>>16)&0xff).toByte)
-    a.putByte(((len>>8)&0xff).toByte)
-    a.putByte((len&0xff).toByte)
-    if (vendor > 0) a.putInt(vendor)(ByteOrder.BIG_ENDIAN)
-    a.append(data)
-    if ((len % 4) > 0) a.putBytes(someBytes, 0, 4 - len%4)
-    a.result()
+    encode24bitInt(len, builder)
+    if (vendor > 0) builder.putInt(vendor)(ByteOrder.BIG_ENDIAN)
+    builder.append(data)
+    if ((len % 4) > 0) builder.putBytes(zeroBytes, 0, 4 - len%4)
+    builder.result()
   }
 
 
@@ -76,24 +83,21 @@ object DiameterCodec {
   }
 
   def encodeHeader(code:Int, flags:Int, app:Int, hh:Int, ee:Int, data:ByteString) = {
-    val a = ByteString.newBuilder
+    val builder = ByteString.newBuilder
     val len = data.length + 20
-    a.putByte(1)
+    builder.putByte(1) //version
 
-    a.putByte(((len>>16)&0xff).toByte)
-    a.putByte(((len>>8)&0xff).toByte)
-    a.putByte((len&0xff).toByte)
+    encode24bitInt(len, builder)
 
-    a.putByte(flags.toByte)
+    builder.putByte(flags.toByte)
 
-    a.putByte(((code>>16)&0xff).toByte)
-    a.putByte(((code>>8)&0xff).toByte)
-    a.putByte((code&0xff).toByte)
-    a.putInt(app)(ByteOrder.BIG_ENDIAN)
-    a.putInt(hh)(ByteOrder.BIG_ENDIAN)
-    a.putInt(ee)(ByteOrder.BIG_ENDIAN)
-    a.append(data)
+    encode24bitInt(code, builder)
 
-    a.result()
+    builder.putInt(app)(ByteOrder.BIG_ENDIAN)
+    builder.putInt(hh)(ByteOrder.BIG_ENDIAN)
+    builder.putInt(ee)(ByteOrder.BIG_ENDIAN)
+    builder.append(data)
+
+    builder.result()
   }
 }
