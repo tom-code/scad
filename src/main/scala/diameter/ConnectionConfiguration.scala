@@ -7,7 +7,7 @@ import scala.concurrent.duration._
 class ConnectionConfiguration  {
   var originHost = "localhost"
   var originRealm = "local"
-  var apps:List[DiameterApp] = List.empty
+  var apps:List[AppInterface] = List.empty
   var dwr_period = 20 seconds
 
 
@@ -21,7 +21,7 @@ class ConnectionConfiguration  {
     this
   }
 
-  def setApps(v : List[DiameterApp] ) = {
+  def setApps(v : List[AppInterface] ) = {
     apps = v
     this
   }

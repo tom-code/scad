@@ -13,7 +13,7 @@ class DiameterHeader(version:Byte, leni:Int, flagsi:Int, codei:Int, app_id:Int, 
   def isRequest = (flags & 0x80) != 0
 }
 
-class DiameterMessageDecoder(callback:(DiameterHeader, ByteString) =>Unit) {
+class MessageDecoder(callback:(DiameterHeader, ByteString) =>Unit) {
   private var got_header = false
   private var header:DiameterHeader = null
   private var data = ByteString.empty
@@ -21,7 +21,7 @@ class DiameterMessageDecoder(callback:(DiameterHeader, ByteString) =>Unit) {
 
   private def parseMessage() : Unit = {
     if (!got_header && data.length >=20) {
-      header = DiameterCodec.decodeHeader(data)
+      header = Codec.decodeHeader(data)
       got_header = true
       data = data.drop(20)
     }

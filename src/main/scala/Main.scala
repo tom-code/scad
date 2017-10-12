@@ -1,6 +1,6 @@
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
-import diameter.{DiameterAppSh, DiameterConnection, TCPServer}
+import diameter.{DiameterAppSh, Connection, TCPServer}
 
 object Main extends App {
   override def main(args:Array[String]): Unit = {
@@ -23,7 +23,7 @@ object Main extends App {
       .setDwrPeriod(10)
 
 
-    val con_actor_cfg = Props(classOf[DiameterConnection], con_config)
+    val con_actor_cfg = Props(classOf[Connection], con_config)
     system.actorOf(Props(classOf[TCPServer], listen_port, con_actor_cfg))
 
 

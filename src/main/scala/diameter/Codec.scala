@@ -4,7 +4,7 @@ import java.nio.ByteOrder
 
 import akka.util.{ByteIterator, ByteString, ByteStringBuilder}
 
-object DiameterCodec {
+object Codec {
   val AVP_FLAG_MANDATORY = 0x40
   val AVP_FLAG_VENDOR    = 0x80
 
