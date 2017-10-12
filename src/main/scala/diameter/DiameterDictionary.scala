@@ -1,3 +1,4 @@
+package diameter
 
 object DiameterDictionary {
   final val AVP_VENDOR_SPECIFIC_APP_ID  = 260
@@ -18,4 +19,6 @@ object DiameterDictionary {
   final val AVP_DATA_REF        = 703
   final val AVP_USER_IDENTITY   = 700
   final val AVP_PUBLIC_IDENTITY = 601
+
+  final val STATUS_SUCCESS = 2001
 }

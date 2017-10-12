@@ -1,25 +1,29 @@
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
+import diameter.{DiameterAppSh, DiameterConnection, TCPServer}
 
 object Main extends App {
   override def main(args:Array[String]): Unit = {
     println("welcome!")
 
+    val system = ActorSystem("system")
+
     val conf = ConfigFactory.load()
-    val origin_host = conf.getString("dia.origin-host")
-    val origin_realm = conf.getString("dia.origin-realm")
     val listen_port = conf.getInt("dia.listen_port")
 
-    println(s"configured local host=$origin_host realm=$origin_realm")
+
+    //val tcp_server = system.actorOf(Props(new diameter.TCPServer(listen_port, Props(new diameter.DiameterConnection(origin_host, origin_realm, app_list)))))
+    //val tcp_server = system.actorOf(Props(classOf[diameter.TCPServer], listen_port, Props(classOf[diameter.DiameterConnection], origin_host, origin_realm, app_list)))
 
 
-    val system = ActorSystem("system")
-    val app_list = List(new DiameterAppSh)
+    val con_config = new diameter.ConnectionConfiguration()
+      .setOriginHost(conf.getString("dia.origin-host"))
+      .setOriginRealm(conf.getString("dia.origin-realm"))
+      .setApps(List(new DiameterAppSh))
+      .setDwrPeriod(10)
 
-    //val tcp_server = system.actorOf(Props(new TCPServer(listen_port, Props(new DiameterConnection(origin_host, origin_realm, app_list)))))
-    //val tcp_server = system.actorOf(Props(classOf[TCPServer], listen_port, Props(classOf[DiameterConnection], origin_host, origin_realm, app_list)))
 
-    val con_actor_cfg = Props(classOf[DiameterConnection], origin_host, origin_realm, app_list)
+    val con_actor_cfg = Props(classOf[DiameterConnection], con_config)
     system.actorOf(Props(classOf[TCPServer], listen_port, con_actor_cfg))
 
 

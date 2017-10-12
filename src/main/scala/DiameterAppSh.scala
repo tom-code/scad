@@ -1,3 +1,5 @@
+package diameter
+
 import java.nio.ByteOrder
 
 import akka.io.Tcp.Write
@@ -66,5 +68,7 @@ class DiameterAppSh extends DiameterApp {
 
   }
 
-  override def id: Integer = DiameterDictionary.APP_SH
+  override def application_id = DiameterDictionary.APP_SH
+
+  override def vendor_id = DiameterDictionary.VENDOR_3GPP
 }

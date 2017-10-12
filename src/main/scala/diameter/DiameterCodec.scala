@@ -1,3 +1,5 @@
+package diameter
+
 import java.nio.ByteOrder
 
 import akka.util.{ByteIterator, ByteString, ByteStringBuilder}

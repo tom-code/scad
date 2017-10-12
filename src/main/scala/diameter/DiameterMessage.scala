@@ -1,3 +1,5 @@
+package diameter
+
 
 import akka.util.ByteString
 
